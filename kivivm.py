@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import(QMainWindow,QAction,
                             qApp,QApplication)
 from PyQt5.QtWidgets import QMenu,QLabel
 from PyQt5.QtCore import QBasicTimer,Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon,QPalette,QColor
 import sys
 import datetime
 from VPS import VPS
@@ -59,9 +59,9 @@ class ControlPanel(QMainWindow):
         self.pbarRam = QProgressBar(self)
         self.pbarRam.setGeometry(120,205+30+10,200,15)
         self.pbarRam.setValue(40)
+        self.pbarRam.setTextVisible(False)
         self.lbRamValue = QLabel(self)
         self.lbRamValue.move(120,215+30+10)
-        self.lbRamValue.setText("40/100 MB")
 
         self.lbSwpKey = QLabel(self)
         self.lbSwpKey.move(20,245+30+10)
@@ -69,9 +69,9 @@ class ControlPanel(QMainWindow):
         self.pbarSwp = QProgressBar(self)
         self.pbarSwp.setGeometry(120,250+30+10,200,15)
         self.pbarSwp.setValue(32)
+        self.pbarSwp.setTextVisible(False)
         self.lbSwpValue = QLabel(self)
         self.lbSwpValue.move(120,260+30+10)
-        self.lbSwpValue.setText("32/100 MB")
 
         self.lbDiskKey = QLabel(self)
         self.lbDiskKey.move(20,290+30+10)
@@ -79,9 +79,9 @@ class ControlPanel(QMainWindow):
         self.pbarDisk = QProgressBar(self)
         self.pbarDisk.setGeometry(120,295+30+10,200,15)
         self.pbarDisk.setValue(69)
+        self.pbarDisk.setTextVisible(False)
         self.lbDiskValue = QLabel(self)
         self.lbDiskValue.move(120,305+30+10)
-        self.lbDiskValue.setText("69/100 MB")
 
         self.lbBandKey = QLabel(self)
         self.lbBandKey.move(20,290+45+30+10)
@@ -89,9 +89,9 @@ class ControlPanel(QMainWindow):
         self.pbarBand = QProgressBar(self)
         self.pbarBand.setGeometry(120,295+45+30+10,200,15)
         self.pbarBand.setValue(69)
+        self.pbarBand.setTextVisible(False)
         self.lbBandValue = QLabel(self)
         self.lbBandValue.move(120,305+45+30+10)
-        self.lbBandValue.setText("69/100 MB")
 
         # self.btnStop = QPushButton('start',self)
         # self.btnStop.move(0,400+30+10)
@@ -148,6 +148,45 @@ class ControlPanel(QMainWindow):
             self.lbOSValue.setText(vps.getOs())
             self.lbLocationValue.setText(vps.getLocation())
             self.lbStatusValue.setText(vps.getLA())
+            self.updateUsage(vps)
+
+    def setPbarColor(self,p,color):
+        palette = QPalette(p.palette())
+        palette.setColor(QPalette.Highlight,QColor(color))
+        p.setPalette(palette)
+
+    def updateUsage(self,vps):
+        t0 = (vps.getRamTotal()-vps.getRamFree())/1024/1024
+        t1 = vps.getRamTotal()/1024/1024
+        s = str(round(t0,2))+"/"+str(t1)+" MB"
+        self.lbRamValue.setText(s)
+        self.pbarRam.setValue(t0*100/t1)
+        if t0*100/t1 > 80:
+            self.setPbarColor(self.pbarRam,Qt.red)
+
+        t0 = (vps.getUsagDisk())/1024/1024/1024
+        t1 = vps.getPlanDisk()/1024/1024/1024
+        s = str(round(t0,2))+"/"+str(t1)+" GB"
+        self.lbDiskValue.setText(s)
+        self.pbarDisk.setValue(t0*100/t1)
+        if t0*100/t1 > 80:
+            self.setPbarColor(self.pbarDisk,Qt.red)
+
+        t0 = (vps.getUsagData())/1024/1024/1024
+        t1 = vps.getPlanData()/1024/1024/1024
+        s = str(round(t0,2))+"/"+str(t1)+" GB"
+        self.lbBandValue.setText(s)
+        self.pbarBand.setValue(t0*100/t1)
+        if t0*100/t1 > 80:
+            self.setPbarColor(self.pbarBand,Qt.red)
+
+        t0 = (vps.getPlanSwap()-vps.getFreeSwap())/1024/1024
+        t1 = vps.getPlanSwap()/1024/1024
+        s = str(round(t0,2))+"/"+str(round(t1,0))+" MB"
+        self.lbSwpValue.setText(s)
+        self.pbarSwp.setValue(t0*100/t1)
+        if t0*100/t1 > 80:
+            self.setPbarColor(self.pbarSwp,Qt.red)
 
     def doAction(self):
         if self.timer.isActive():

@@ -45,5 +45,35 @@ class VPS(object):
         la = self.infoDt["load_average"]
         return r+": "+la
 
-    def getPlanGb():
+# use Byte default below
+    def getPlanData(self):
         plan = self.infoDt["plan_monthly_data"]
+        return plan
+
+    def getUsagData(self):
+        data = self.infoDt["data_counter"]
+        return data
+
+    def getRamFree(self):
+        free = self.infoDt["mem_available_kb"]
+        return free*1024
+
+    def getRamTotal(self):
+        total = self.infoDt["plan_ram"]
+        return total
+
+    def getUsagDisk(self):
+        usage = self.infoDt["ve_used_disk_space_b"]
+        return usage
+
+    def getPlanDisk(self):
+        plan = self.infoDt["plan_disk"]
+        return plan
+
+    def getPlanSwap(self):
+        plan = self.infoDt["swap_total_kb"]
+        return plan*1024
+
+    def getFreeSwap(self):
+        free = self.infoDt["swap_available_kb"]
+        return free*1024
