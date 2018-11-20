@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import(QProgressBar,
 from PyQt5.QtWidgets import(QMainWindow,QAction,
                             qApp,QApplication)
 from PyQt5.QtWidgets import QMenu,QLabel
-from PyQt5.QtCore import QBasicTimer,Qt
+from PyQt5.QtCore import QBasicTimer,Qt,QThread,pyqtSignal
 from PyQt5.QtGui import QIcon,QPalette,QColor
 import sys
 import datetime
@@ -11,7 +11,10 @@ from VPS import VPS
 class ControlPanel(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.updateThread = updateThread()
+        self.updateThread.signal.connect(self.updateUsage)
         self.initUI()
+        self.updateThread.start()
 
     def initUI(self):
         self.lbOSKey = QLabel(self)
@@ -142,13 +145,7 @@ class ControlPanel(QMainWindow):
         if action == quitAct:
             qApp.quit()
         if action == refreshAct:
-            vps = VPS()
-            self.lbIPValue.setText(vps.getIp())
-            self.lbSSHPortValue.setText(vps.getSSHPort())
-            self.lbOSValue.setText(vps.getOs())
-            self.lbLocationValue.setText(vps.getLocation())
-            self.lbStatusValue.setText(vps.getLA())
-            self.updateUsage(vps)
+            self.updateThread.start()
 
     def setPbarColor(self,p,color):
         palette = QPalette(p.palette())
@@ -156,6 +153,12 @@ class ControlPanel(QMainWindow):
         p.setPalette(palette)
 
     def updateUsage(self,vps):
+        self.lbIPValue.setText(vps.getIp())
+        self.lbSSHPortValue.setText(vps.getSSHPort())
+        self.lbOSValue.setText(vps.getOs())
+        self.lbLocationValue.setText(vps.getLocation())
+        self.lbStatusValue.setText(vps.getLA())
+
         t0 = (vps.getRamTotal()-vps.getRamFree())/1024/1024
         t1 = vps.getRamTotal()/1024/1024
         s = str(round(t0,2))+"/"+str(t1)+" MB"
@@ -204,6 +207,19 @@ class ControlPanel(QMainWindow):
 
         self.step = self.step + 1
         self.pbar.setValue(self.step)
+
+class updateThread(QThread):
+    signal = pyqtSignal('PyQt_PyObject')
+    def __init__(self):
+        QThread.__init__(self)
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        vps = VPS()
+        self.signal.emit(vps)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
